@@ -79,7 +79,6 @@ async function parse (json) {
 
   all.forEach((item) => {
     map.push(
-      { revision: item.revision, name: `${item.classname.replace('*', '_')}_icon.png` },
       { revision: item.revision, name: `${item.classname.split('*')[0]}.swf` },
     )
   })
