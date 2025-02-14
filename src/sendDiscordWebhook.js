@@ -6,12 +6,12 @@ const { execSync } = require('child_process');
 
 // Recupera i webhook dalle variabili d'ambiente
 const webhooks = {
-  'resource/effects': process.env.EFF_DISCORD,
-  'resource/furniture': process.env.FUR_DISCORD,
-  'resource/clothes': process.env.CLT_DISCORD,
-  'resource/c_images/album1584': process.env.IMG_DISCORD, // Distintivi
-  'resource/c_images/catalogue': process.env.IMG_DISCORD, // Icone catalogo
-  'resource/c_images/reception': process.env.IMG_DISCORD, // Hotel view
+  'resource/effects': process.env.EFF_DISCORD,       // Effetti
+  'resource/furniture': process.env.FUR_DISCORD,     // Furni
+  'resource/clothes': process.env.CLT_DISCORD,       // Clothing
+  'resource/c_images/album1584': process.env.DST_DISCORD,  // Distintivi
+  'resource/c_images/catalogue': process.env.IMG_DISCORD,  // Icone catalogo
+  'resource/c_images/reception': process.env.IMG_DISCORD,  // Hotel view
   'resource/c_images/web_promo_small': process.env.IMG_DISCORD // Promo Small
 };
 
@@ -20,7 +20,7 @@ const targetFolders = Object.keys(webhooks).filter(folder => webhooks[folder]);
 
 const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
 
-// Funzione delay per evitare flood di richieste
+// Funzione delay per evitare troppe richieste in rapida successione
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -40,14 +40,14 @@ function getWebhookForCategory(filePath) {
 
 async function sendImage(imagePath, category, webhookUrl) {
   if (!webhookUrl) {
-    console.error(`Nessun webhook configurato per la categoria ${category}.`);
+    console.error(`❌ Nessun webhook configurato per la categoria ${category}.`);
     return;
   }
 
   try {
     const form = new FormData();
     form.append('file', fs.createReadStream(imagePath));
-    form.append('content', `Nuova immagine in categoria **${category}**: ${path.basename(imagePath)}`);
+    form.append('content', `🆕 Nuova immagine in categoria **${category}**: ${path.basename(imagePath)}`);
 
     await axios.post(webhookUrl, form, {
       headers: form.getHeaders()
@@ -69,7 +69,7 @@ async function processNewImages() {
       .map(f => f.trim())
       .filter(f => f !== '');
   } catch (err) {
-    console.error("Errore nell'ottenere i file modificati:", err.message);
+    console.error("❌ Errore nell'ottenere i file modificati:", err.message);
     return;
   }
 
