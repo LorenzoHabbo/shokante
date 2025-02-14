@@ -1,0 +1,32 @@
+name: Esegui habbo-downloader
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  run-habbo-downloader:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Installa habbo-downloader globalmente
+        run: npm install -g habbo-downloader
+
+      - name: Esegui comandi hdl
+        run: |
+          hdl -c badges
+          hdl -c hotelview
+          hdl -c promo
+          hdl -c clothes
+          hdl -c effects
+          hdl -c effects
+          hdl -c furnitures
