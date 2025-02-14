@@ -1,5 +1,5 @@
 name: Download Habbo Files
-# Specifica i permessi necessari per il workflow
+
 permissions:
   contents: write
 
@@ -13,35 +13,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions/setup-node@v2
         with:
           node-version: 16
-      - name: Install dependencies
-        run: npm i
 
-      # articles
+      - name: Install dependencies
+        run: npm install
+
+      # Esecuzione dei download delle immagini
       - name: Download News Article Images
         run: node src/index.js -c articles -d it
 
-      # badges
       - name: Download Badges
         run: node src/index.js -c badges -d it
 
-      # hotelview
       - name: Download Hotelview Images
         run: node src/index.js -c hotelview
 
-      # icons
       - name: Download Catalogue Icons
         run: node src/index.js -c icons
 
-      # promo
       - name: Download Web Promo Images
         run: node src/index.js -c promo
 
-      # commit
-      - uses: EndBug/add-and-commit@v7
+      # Commit delle immagini scaricate (tutte all'interno della cartella resource)
+      - name: Commit new images
+        uses: EndBug/add-and-commit@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           default_author: github_actions
           add: resource
+          commit_message: "Aggiunte nuove immagini"
+
+      # Invio delle immagini a Discord tramite webhook
+      - name: Send new images to Discord
+        env:
+          IMG_DISCORD: ${{ secrets.IMG_DISCORD }}
+        run: node src/sendDiscordWebhook.js
