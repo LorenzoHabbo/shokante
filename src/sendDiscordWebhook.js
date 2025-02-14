@@ -61,8 +61,8 @@ async function sendImage(imagePath, category) {
 async function processNewImages() {
   let changedFiles = [];
   try {
-    // Ottiene i file modificati nel commit appena creato
-    changedFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD')
+    // Aumenta il maxBuffer a 1MB per evitare errori ENOBUFS
+    changedFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD', { maxBuffer: 1024 * 1024 })
       .toString()
       .split('\n')
       .map(f => f.trim())
