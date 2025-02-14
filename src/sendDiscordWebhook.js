@@ -11,8 +11,8 @@ const webhooks = {
   'resource/clothes': process.env.CLT_DISCORD,       // Clothing
   'resource/c_images/album1584': process.env.DST_DISCORD,  // Distintivi
   'resource/c_images/catalogue': process.env.IMG_DISCORD,  // Icone catalogo
-  'resource/c_images/reception': process.env.IMG_DISCORD,  // Hotel view
-  'resource/c_images/web_promo_small': process.env.IMG_DISCORD // Promo Small
+  'resource/c_images/reception': process.env.HTW_DISCORD,  // Hotel view
+  'resource/c_images/web_promo_small': process.env.PRS_DISCORD // Promo Small
 };
 
 // Filtra solo le cartelle con webhook configurati
