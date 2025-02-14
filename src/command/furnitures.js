@@ -96,7 +96,7 @@ async function handle () {
       src: `https://images.habbo.com/dcr/hof_furni/${item.revision}/${item.name}`,
       dst: (config.revision)
         ? `dcr/hof_furni/${item.revision}/${item.name}`
-        : `dcr/hof_furni/${item.name}`
+        : `furniture/${item.name}`
     }
   }))
 }
