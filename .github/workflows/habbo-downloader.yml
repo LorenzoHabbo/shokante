@@ -21,12 +21,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Esecuzione dei download delle immagini
+      # Altre categorie (senza conversione)
       - name: Download News Article Images
-        run: node src/index.js -c articles
+        run: node src/index.js -c articles -d it
 
       - name: Download Badges
-        run: node src/index.js -c badges
+        run: node src/index.js -c badges -d it
 
       - name: Download Hotelview Images
         run: node src/index.js -c hotelview
@@ -37,7 +37,23 @@ jobs:
       - name: Download Web Promo Images
         run: node src/index.js -c promo
 
-      # Commit delle immagini scaricate (tutte all'interno della cartella resource)
+      # Categorie per cui i file SWF vengono convertiti in PNG
+      - name: Download Furnitures SWF
+        run: node src/index.js -c furnitures
+      - name: Convert Furnitures SWF to PNG
+        run: node src/convertSwfFiles.js resource/furniture resource/furniture
+
+      - name: Download Clothes SWF
+        run: node src/index.js -c clothes
+      - name: Convert Clothes SWF to PNG
+        run: node src/convertSwfFiles.js resource/clothes resource/clothes
+
+      - name: Download Effects SWF
+        run: node src/index.js -c effects
+      - name: Convert Effects SWF to PNG
+        run: node src/convertSwfFiles.js resource/effects resource/effects
+
+      # Commit delle immagini scaricate/convertite (tutte le modifiche nella cartella resource)
       - name: Commit new images
         uses: EndBug/add-and-commit@v7
         with:

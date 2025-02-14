@@ -11,17 +11,20 @@ if (!webhookUrl) {
   process.exit(1);
 }
 
-// Definisci le cartelle target e le categorie corrispondenti
+// Mappa delle cartelle target e relative categorie
 const targetFolders = {
   'resource/c_images/album1584': 'Distintivi',
   'resource/c_images/catalogue': 'Icone catalogo',
   'resource/c_images/reception': 'Hotel view',
-  'resource/c_images/web_promo_small': 'Promo Small'
+  'resource/c_images/web_promo_small': 'Promo Small',
+  'resource/furniture': 'Furniture',
+  'resource/clothes': 'Clothes',
+  'resource/effects': 'Effects'
 };
 
 const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
 
-// Funzione delay: ritorna una Promise che risolve dopo ms millisecondi
+// Funzione delay per evitare troppe richieste in rapida successione
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -43,9 +46,7 @@ function getCategory(filePath) {
 async function sendImage(imagePath, category) {
   try {
     const form = new FormData();
-    // Aggiungi il file allo stream
     form.append('file', fs.createReadStream(imagePath));
-    // Aggiungi un messaggio con il nome del file e la categoria
     form.append('content', `Nuova immagine in categoria **${category}**: ${path.basename(imagePath)}`);
 
     await axios.post(webhookUrl, form, {
@@ -60,7 +61,7 @@ async function sendImage(imagePath, category) {
 async function processNewImages() {
   let changedFiles = [];
   try {
-    // Ottieni i file modificati nel commit appena creato
+    // Ottiene i file modificati nel commit appena creato
     changedFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD')
       .toString()
       .split('\n')
@@ -81,11 +82,10 @@ async function processNewImages() {
     return;
   }
 
-  // Invia ogni immagine trovata con un delay tra un invio e l'altro
+  // Invia ogni immagine trovata con un delay di 2 secondi tra gli invii
   for (const file of newImageFiles) {
     const category = getCategory(file);
     await sendImage(file, category);
-    // Aggiungi un delay di 2 secondi (2000 ms) tra un invio e l'altro
     await delay(2000);
   }
 }
