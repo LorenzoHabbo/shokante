@@ -47,7 +47,7 @@ async function sendImage(imagePath, category, webhookUrl) {
   try {
     const form = new FormData();
     form.append('file', fs.createReadStream(imagePath));
-    form.append('content', `🆕 Nuova immagine in categoria **${category}**: ${path.basename(imagePath)}`);
+    form.append('content', `🆕: ${path.basename(imagePath)}`);
 
     await axios.post(webhookUrl, form, {
       headers: form.getHeaders()
