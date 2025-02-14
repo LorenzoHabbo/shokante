@@ -2,6 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
+const { execSync } = require('child_process');
 
 // Recupera l'URL del webhook dalla variabile d'ambiente IMG_DISCORD
 const webhookUrl = process.env.IMG_DISCORD;
@@ -10,26 +11,44 @@ if (!webhookUrl) {
   process.exit(1);
 }
 
-// Mappa delle cartelle e le categorie associate
-const directories = [
-  { folder: 'resource/c_images/album1584', category: 'Distintivi' },
-  { folder: 'resource/c_images/catalogue', category: 'Icone catalogo' },
-  { folder: 'resource/c_images/reception', category: 'Hotel view' },
-  { folder: 'resource/c_images/web_promo_small', category: 'Promo Small' },
-];
+// Definisci le cartelle target e le categorie corrispondenti
+const targetFolders = {
+  'resource/c_images/album1584': 'Distintivi',
+  'resource/c_images/catalogue': 'Icone catalogo',
+  'resource/c_images/reception': 'Hotel view',
+  'resource/c_images/web_promo_small': 'Promo Small'
+};
 
-// Estensioni dei file da considerare come immagini
 const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
+
+// Funzione delay: ritorna una Promise che risolve dopo ms millisecondi
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isImageFile(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  return imageExtensions.includes(ext);
+}
+
+function getCategory(filePath) {
+  for (const folder in targetFolders) {
+    if (filePath.startsWith(folder)) {
+      return targetFolders[folder];
+    }
+  }
+  return 'Sconosciuto';
+}
 
 async function sendImage(imagePath, category) {
   try {
     const form = new FormData();
-    // Aggiunge il file allo stream
+    // Aggiungi il file allo stream
     form.append('file', fs.createReadStream(imagePath));
-    // Aggiunge un messaggio opzionale con il nome del file e la categoria
+    // Aggiungi un messaggio con il nome del file e la categoria
     form.append('content', `Nuova immagine in categoria **${category}**: ${path.basename(imagePath)}`);
 
-    const response = await axios.post(webhookUrl, form, {
+    await axios.post(webhookUrl, form, {
       headers: form.getHeaders()
     });
     console.log(`Immagine ${path.basename(imagePath)} inviata correttamente.`);
@@ -38,20 +57,37 @@ async function sendImage(imagePath, category) {
   }
 }
 
-async function processDirectories() {
-  for (const { folder, category } of directories) {
-    if (!fs.existsSync(folder)) {
-      console.warn(`La cartella ${folder} non esiste.`);
-      continue;
-    }
-    const files = fs.readdirSync(folder);
-    // Filtra solo i file con estensioni compatibili
-    const imageFiles = files.filter(file => imageExtensions.includes(path.extname(file).toLowerCase()));
-    for (const file of imageFiles) {
-      const fullPath = path.join(folder, file);
-      await sendImage(fullPath, category);
-    }
+async function processNewImages() {
+  let changedFiles = [];
+  try {
+    // Ottieni i file modificati nel commit appena creato
+    changedFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD')
+      .toString()
+      .split('\n')
+      .map(f => f.trim())
+      .filter(f => f !== '');
+  } catch (err) {
+    console.error("Errore nell'ottenere i file modificati:", err.message);
+    return;
+  }
+
+  // Filtra solo i file immagine presenti nelle cartelle target
+  const newImageFiles = changedFiles.filter(file => {
+    return Object.keys(targetFolders).some(folder => file.startsWith(folder)) && isImageFile(file);
+  });
+
+  if (newImageFiles.length === 0) {
+    console.log("Nessuna nuova immagine trovata.");
+    return;
+  }
+
+  // Invia ogni immagine trovata con un delay tra un invio e l'altro
+  for (const file of newImageFiles) {
+    const category = getCategory(file);
+    await sendImage(file, category);
+    // Aggiungi un delay di 2 secondi (2000 ms) tra un invio e l'altro
+    await delay(2000);
   }
 }
 
-processDirectories();
+processNewImages();

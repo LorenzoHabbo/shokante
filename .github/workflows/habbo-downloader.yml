@@ -23,10 +23,10 @@ jobs:
 
       # Esecuzione dei download delle immagini
       - name: Download News Article Images
-        run: node src/index.js -c articles -d it
+        run: node src/index.js -c articles
 
       - name: Download Badges
-        run: node src/index.js -c badges -d it
+        run: node src/index.js -c badges
 
       - name: Download Hotelview Images
         run: node src/index.js -c hotelview
@@ -46,7 +46,7 @@ jobs:
           add: resource
           commit_message: "Aggiunte nuove immagini"
 
-      # Invio delle immagini a Discord tramite webhook
+      # Invio SOLO delle nuove immagini a Discord tramite webhook
       - name: Send new images to Discord
         env:
           IMG_DISCORD: ${{ secrets.IMG_DISCORD }}
