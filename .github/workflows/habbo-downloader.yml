@@ -53,14 +53,18 @@ jobs:
       - name: Convert Effects SWF to PNG
         run: node src/convertSwfFiles.js resource/effects resource/effects
 
-      # Commit delle immagini scaricate/convertite (tutte le modifiche nella cartella resource)
+      # Rimuove i file SWF così non verranno committati
+      - name: Remove SWF files
+        run: find resource -type f -name '*.swf' -delete
+
+      # Commit delle immagini convertite (tutte le modifiche nella cartella resource)
       - name: Commit new images
         uses: EndBug/add-and-commit@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           default_author: github_actions
           add: resource
-          commit_message: "Aggiunte nuove immagini"
+          commit_message: "Aggiunte nuove immagini convertite"
 
       # Invio SOLO delle nuove immagini a Discord tramite webhook
       - name: Send new images to Discord
