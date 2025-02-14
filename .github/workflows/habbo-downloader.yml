@@ -1,8 +1,13 @@
 name: Download Habbo Files
+# Specifica i permessi necessari per il workflow
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: '0 */3 * * *'
   workflow_dispatch:
+
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -37,5 +42,6 @@ jobs:
       # commit
       - uses: EndBug/add-and-commit@v7
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           default_author: github_actions
           add: resource
