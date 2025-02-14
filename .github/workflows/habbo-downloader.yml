@@ -69,5 +69,9 @@ jobs:
       # Invio SOLO delle nuove immagini a Discord tramite webhook
       - name: Send new images to Discord
         env:
-          IMG_DISCORD: ${{ secrets.IMG_DISCORD }}
+          IMG_DISCORD: ${{ secrets.IMG_DISCORD }} # Per distintivi, icone, hotelview e promo
+          EFF_DISCORD: ${{ secrets.EFF_DISCORD }} # Per effetti
+          FUR_DISCORD: ${{ secrets.FUR_DISCORD }} # Per furni
+          CLT_DISCORD: ${{ secrets.CLT_DISCORD }} # Per clothing
         run: node src/sendDiscordWebhook.js
+

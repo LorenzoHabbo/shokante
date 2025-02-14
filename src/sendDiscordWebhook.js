@@ -4,46 +4,46 @@ const path = require('path');
 const FormData = require('form-data');
 const { execSync } = require('child_process');
 
-// Recupera l'URL del webhook dalla variabile d'ambiente IMG_DISCORD
-const webhookUrl = process.env.IMG_DISCORD;
-if (!webhookUrl) {
-  console.error("Errore: la variabile d'ambiente IMG_DISCORD non è impostata.");
-  process.exit(1);
-}
-
-// Mappa delle cartelle target e relative categorie
-const targetFolders = {
-  'resource/c_images/album1584': 'Distintivi',
-  'resource/c_images/catalogue': 'Icone catalogo',
-  'resource/c_images/reception': 'Hotel view',
-  'resource/c_images/web_promo_small': 'Promo Small',
-  'resource/furniture': 'Furniture',
-  'resource/clothes': 'Clothes',
-  'resource/effects': 'Effects'
+// Recupera i webhook dalle variabili d'ambiente
+const webhooks = {
+  'resource/effects': process.env.EFF_DISCORD,
+  'resource/furniture': process.env.FUR_DISCORD,
+  'resource/clothes': process.env.CLT_DISCORD,
+  'resource/c_images/album1584': process.env.IMG_DISCORD, // Distintivi
+  'resource/c_images/catalogue': process.env.IMG_DISCORD, // Icone catalogo
+  'resource/c_images/reception': process.env.IMG_DISCORD, // Hotel view
+  'resource/c_images/web_promo_small': process.env.IMG_DISCORD // Promo Small
 };
+
+// Filtra solo le cartelle con webhook configurati
+const targetFolders = Object.keys(webhooks).filter(folder => webhooks[folder]);
 
 const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
 
-// Funzione delay per evitare troppe richieste in rapida successione
+// Funzione delay per evitare flood di richieste
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function isImageFile(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  return imageExtensions.includes(ext);
+  return imageExtensions.includes(path.extname(filePath).toLowerCase());
 }
 
-function getCategory(filePath) {
-  for (const folder in targetFolders) {
+function getWebhookForCategory(filePath) {
+  for (const folder of targetFolders) {
     if (filePath.startsWith(folder)) {
-      return targetFolders[folder];
+      return webhooks[folder];
     }
   }
-  return 'Sconosciuto';
+  return null;
 }
 
-async function sendImage(imagePath, category) {
+async function sendImage(imagePath, category, webhookUrl) {
+  if (!webhookUrl) {
+    console.error(`Nessun webhook configurato per la categoria ${category}.`);
+    return;
+  }
+
   try {
     const form = new FormData();
     form.append('file', fs.createReadStream(imagePath));
@@ -52,16 +52,17 @@ async function sendImage(imagePath, category) {
     await axios.post(webhookUrl, form, {
       headers: form.getHeaders()
     });
-    console.log(`Immagine ${path.basename(imagePath)} inviata correttamente.`);
+
+    console.log(`✅ Immagine inviata: ${imagePath} -> ${webhookUrl}`);
   } catch (error) {
-    console.error(`Errore nell'invio dell'immagine ${path.basename(imagePath)}:`, error.message);
+    console.error(`❌ Errore nell'invio di ${imagePath} a ${webhookUrl}:`, error.message);
   }
 }
 
 async function processNewImages() {
   let changedFiles = [];
   try {
-    // Aumenta il maxBuffer a 1MB per evitare errori ENOBUFS
+    // Aumenta il maxBuffer per evitare errori ENOBUFS
     changedFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD', { maxBuffer: 1024 * 1024 })
       .toString()
       .split('\n')
@@ -72,21 +73,23 @@ async function processNewImages() {
     return;
   }
 
-  // Filtra solo i file immagine presenti nelle cartelle target
-  const newImageFiles = changedFiles.filter(file => {
-    return Object.keys(targetFolders).some(folder => file.startsWith(folder)) && isImageFile(file);
-  });
+  // Filtra solo i file immagine nelle cartelle con webhook configurati
+  const newImageFiles = changedFiles.filter(file => 
+    targetFolders.some(folder => file.startsWith(folder)) && isImageFile(file)
+  );
 
   if (newImageFiles.length === 0) {
-    console.log("Nessuna nuova immagine trovata.");
+    console.log("📂 Nessuna nuova immagine trovata.");
     return;
   }
 
-  // Invia ogni immagine trovata con un delay di 2 secondi tra gli invii
+  // Invia ogni immagine con il webhook corretto
   for (const file of newImageFiles) {
-    const category = getCategory(file);
-    await sendImage(file, category);
-    await delay(2000);
+    const category = path.basename(path.dirname(file)); // es. effects, furniture, clothes
+    const webhookUrl = getWebhookForCategory(file);
+
+    await sendImage(file, category, webhookUrl);
+    await delay(2000); // Delay di 2 secondi tra un invio e l'altro
   }
 }
 
